@@ -36,6 +36,7 @@ services:
     environment:
       - PUBLIC_HOST=${PUBLIC_HOST:-localhost}
       - DOCKER_NETWORK=${COMPOSE_PROJECT_NAME:-scip-v3}_scip-network
+      - BASE_PATH=${PWD}
     networks:
       - scip-network
     depends_on:

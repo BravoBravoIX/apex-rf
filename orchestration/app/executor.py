@@ -164,10 +164,12 @@ class ExerciseExecutor:
         # Convert /iq_library/file.iq to absolute host path
         # The orchestration container has the host's scenarios directory mounted at /scenarios
         # But when creating sibling containers, we need to use the actual host path
+        # Use BASE_PATH env var to support both local dev and AWS deployment
+        base_path = os.getenv('BASE_PATH', '/Users/brettburford/Development/CyberOps/space-cyber-range/apex-rf')
+
         if iq_file.startswith('/iq_library/'):
             iq_filename = iq_file[12:]  # Remove /iq_library prefix (12 chars, not 13)
-            # Use the actual host path (from the orchestration container's mount)
-            iq_file_host_path = f"/Users/brettburford/Development/CyberOps/space-cyber-range/apex-rf/scenarios/iq_library/{iq_filename}"
+            iq_file_host_path = f"{base_path}/scenarios/iq_library/{iq_filename}"
         else:
             iq_file_host_path = iq_file
 
@@ -222,7 +224,9 @@ class ExerciseExecutor:
             print("No additional services to deploy")
             return
 
-        iq_library_host_path = "/Users/brettburford/Development/CyberOps/space-cyber-range/apex-rf/scenarios/iq_library"
+        # Use BASE_PATH env var to support both local dev and AWS deployment
+        base_path = os.getenv('BASE_PATH', '/Users/brettburford/Development/CyberOps/space-cyber-range/apex-rf')
+        iq_library_host_path = f"{base_path}/scenarios/iq_library"
 
         for service in services:
             service_name = service.get('name')
@@ -261,8 +265,10 @@ class ExerciseExecutor:
                     mode = parts[2] if len(parts) > 2 else 'rw'
 
                     # Convert relative paths to absolute
+                    # Use BASE_PATH env var to support both local dev and AWS deployment
                     if host_path.startswith('./'):
-                        host_path = f"/Users/brettburford/Development/CyberOps/space-cyber-range/apex-rf/{host_path[2:]}"
+                        base_path = os.getenv('BASE_PATH', '/Users/brettburford/Development/CyberOps/space-cyber-range/apex-rf')
+                        host_path = f"{base_path}/{host_path[2:]}"
 
                     volume_mappings[host_path] = {
                         'bind': container_path,
