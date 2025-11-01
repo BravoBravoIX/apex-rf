@@ -13,7 +13,7 @@
       "description": "Control RF signal playback and jamming operations",
       "timeline_file": "timelines/timeline-rf-demo.json",
       "dashboard_port": 3400,
-      "dashboard_image": "team-dashboard-sdr:latest"
+      "dashboard_image": "apex-rf-team-dashboard-sdr:latest"
     },
     {
       "id": "signal-metrics",
@@ -21,7 +21,7 @@
       "description": "Monitor signal quality and jamming effectiveness in real-time",
       "timeline_file": "timelines/timeline-rf-demo.json",
       "dashboard_port": 3401,
-      "dashboard_image": "team-dashboard-metrics:latest"
+      "dashboard_image": "apex-rf-team-dashboard-metrics:latest"
     }
   ],
   "services": [

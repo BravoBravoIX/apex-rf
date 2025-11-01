@@ -25,6 +25,7 @@ services:
       - scip-network
 
   orchestration:
+    image: apex-rf-orchestration:latest
     build: ./orchestration
     container_name: scip-orchestration
     ports:
@@ -42,6 +43,7 @@ services:
       - redis
 
   client-dashboard:
+    image: apex-rf-client-dashboard:latest
     build: ./client-dashboard
     container_name: scip-client-dashboard
     ports:
@@ -52,7 +54,7 @@ services:
       - orchestration
 
   team-dashboard:
-    image: team-dashboard:latest
+    image: apex-rf-team-dashboard:latest
     build: ./team-dashboard
     # This service is not started by default, but is used to build the image
     # that the orchestration service will launch.
@@ -60,7 +62,7 @@ services:
       replicas: 0
 
   team-dashboard-satcom:
-    image: team-dashboard-satcom:latest
+    image: apex-rf-team-dashboard-satcom:latest
     build: ./team-dashboard-satcom
     # This service is not started by default, but is used to build the image
     # that the orchestration service will launch.
@@ -68,7 +70,7 @@ services:
       replicas: 0
 
   team-dashboard-sdr:
-    image: team-dashboard-sdr:latest
+    image: apex-rf-team-dashboard-sdr:latest
     build: ./team-dashboard-sdr
     # This service is not started by default, but is used to build the image
     # that the orchestration service will launch.
@@ -76,33 +78,35 @@ services:
       replicas: 0
 
   team-dashboard-sstv:
-    image: team-dashboard-sstv:latest
+    image: apex-rf-team-dashboard-sstv:latest
     build: ./team-dashboard-sstv
     # SSTV image decoder dashboard
     deploy:
       replicas: 0
 
   team-dashboard-ais:
-    image: team-dashboard-ais:latest
+    image: apex-rf-team-dashboard-ais:latest
     build: ./team-dashboard-ais
     # AIS maritime tracking dashboard
     deploy:
       replicas: 0
 
   team-dashboard-metrics:
-    image: team-dashboard-metrics:latest
+    image: apex-rf-team-dashboard-metrics:latest
     build: ./team-dashboard-metrics
     # Signal metrics analyzer dashboard
     deploy:
       replicas: 0
 
   sdr-service:
+    image: apex-rf-sdr-service:latest
     build: ./sdr-service
     # This service is not started by default, scenario is disabled
     deploy:
       replicas: 0
 
   decode-service:
+    image: apex-rf-decode-service:latest
     build: ./decode-service
     # Decodes IQ samples for SSTV, AIS, and metrics analysis
     deploy:

@@ -13,7 +13,7 @@
       "description": "Control RF jamming and IQ file playback",
       "timeline_file": "timelines/timeline-sdr-rf.json",
       "dashboard_port": 3300,
-      "dashboard_image": "team-dashboard-sdr:latest"
+      "dashboard_image": "apex-rf-team-dashboard-sdr:latest"
     },
     {
       "id": "sstv-decode",
@@ -21,7 +21,7 @@
       "description": "Decode SSTV images from IQ samples",
       "timeline_file": "timelines/timeline-sdr-rf.json",
       "dashboard_port": 3301,
-      "dashboard_image": "team-dashboard-sstv:latest"
+      "dashboard_image": "apex-rf-team-dashboard-sstv:latest"
     },
     {
       "id": "ais-decode",
@@ -29,7 +29,7 @@
       "description": "Track vessels from AIS VHF signals",
       "timeline_file": "timelines/timeline-sdr-rf.json",
       "dashboard_port": 3302,
-      "dashboard_image": "team-dashboard-ais:latest"
+      "dashboard_image": "apex-rf-team-dashboard-ais:latest"
     },
     {
       "id": "metrics-decode",
@@ -37,7 +37,7 @@
       "description": "Real-time signal quality and jamming impact analysis",
       "timeline_file": "timelines/timeline-sdr-rf.json",
       "dashboard_port": 3303,
-      "dashboard_image": "team-dashboard-metrics:latest"
+      "dashboard_image": "apex-rf-team-dashboard-metrics:latest"
     }
   ],
   "services": [
