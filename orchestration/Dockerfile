@@ -32,4 +32,5 @@ RUN python -m playwright install-deps chromium
 
 COPY ./app /app/
 EXPOSE 8001
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+# Increase timeout for large IQ file uploads (600 seconds = 10 minutes)
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001", "--timeout-keep-alive", "600"]
