@@ -1,46 +1,33 @@
 import { useInjects } from '../contexts/InjectContext';
-import { ThemeToggle } from './ThemeToggle';
 
 export const Header = () => {
-  const { timer, exerciseState } = useInjects();
+  const { timer, turnInfo } = useInjects();
   const urlParams = new URLSearchParams(window.location.search);
-  const teamId = urlParams.get('team') || 'default-team';
-
-  const getStateColor = () => {
-    switch (exerciseState) {
-      case 'RUNNING': return 'text-success';
-      case 'PAUSED': return 'text-warning';
-      case 'STOPPED': return 'text-error';
-      default: return 'text-text-muted';
-    }
-  };
+  const teamId = urlParams.get('team') || 'rf-control';
 
   return (
-    <header className="bg-surface w-full p-4 border-b border-border">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <img
-            src="/cyberops-logo.png"
-            alt="CyberOps"
-            className="h-10 w-auto object-contain"
-          />
-          <h1 className="text-xl font-semibold text-text-primary">
-            Team: <span className="text-primary capitalize">{teamId}</span>
-          </h1>
+    <header className="bg-white shadow-lg w-full">
+      <div className="px-6 py-4 flex justify-between items-center">
+        <div className="flex items-center gap-6">
+          <div className="flex items-end gap-2">
+            <div className="flex flex-col text-xs text-gray-600 leading-tight">
+              <span>Advanced Platform for Exercise &</span>
+              <span>eXperimentation</span>
+            </div>
+            <h1 className="text-2xl font-bold text-gray-900">APEX</h1>
+          </div>
+          <img src="/cyberops-logo.png" alt="CyberOps" className="h-10" />
+          <div className="text-sm text-gray-700 font-medium">
+            Team: <span className="text-blue-600 capitalize">{teamId}</span>
+          </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="text-right">
-            <div className="text-2xl font-mono font-bold text-primary">{timer}</div>
-            <div className={`text-sm font-semibold ${getStateColor()}`}>
-              {exerciseState}
+          {turnInfo.turn_based && turnInfo.current_turn && turnInfo.current_turn > 0 && (
+            <div className="text-lg font-semibold text-gray-700">
+              Turn {turnInfo.current_turn}{turnInfo.total_turns ? ` of ${turnInfo.total_turns}` : ''}
             </div>
-          </div>
-          <ThemeToggle />
-          <img
-            src="/dewc-logo.jpeg"
-            alt="DEWC"
-            className="h-8 w-auto object-contain"
-          />
+          )}
+          <div className="text-3xl font-mono font-bold text-blue-600">{timer}</div>
         </div>
       </div>
     </header>

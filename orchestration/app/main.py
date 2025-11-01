@@ -1391,6 +1391,17 @@ def list_iq_files():
     supported_formats = {'.iq', '.dat', '.raw', '.cfile'}
 
     try:
+        # Load metadata.json if it exists
+        metadata_path = os.path.join(IQ_LIBRARY_DIR, 'metadata.json')
+        metadata_lookup = {}
+        if os.path.exists(metadata_path):
+            with open(metadata_path, 'r') as f:
+                import json
+                metadata = json.load(f)
+                # Create lookup by filename
+                for item in metadata.get('iq_files', []):
+                    metadata_lookup[item['filename']] = item
+
         for filename in os.listdir(IQ_LIBRARY_DIR):
             file_path = os.path.join(IQ_LIBRARY_DIR, filename)
             file_ext = os.path.splitext(filename)[1].lower()
@@ -1409,7 +1420,7 @@ def list_iq_files():
             num_samples = file_size // 8  # 8 bytes per complex64 sample
             duration_seconds = num_samples / sample_rate
 
-            iq_files.append({
+            file_info = {
                 'filename': filename,
                 'path': f"/iq_library/{filename}",
                 'size': file_size,
@@ -1418,7 +1429,21 @@ def list_iq_files():
                 'num_samples': num_samples,
                 'modified': modified_time,
                 'format': file_ext[1:]  # Remove leading dot
-            })
+            }
+
+            # Merge with metadata if available
+            if filename in metadata_lookup:
+                meta = metadata_lookup[filename]
+                file_info.update({
+                    'display_name': meta.get('display_name'),
+                    'description': meta.get('description'),
+                    'center_frequency_mhz': meta.get('center_frequency_mhz'),
+                    'sample_rate_hz': meta.get('sample_rate_hz'),
+                    'signal_type': meta.get('signal_type'),
+                    'notes': meta.get('notes')
+                })
+
+            iq_files.append(file_info)
 
         # Sort by filename
         iq_files.sort(key=lambda x: x['filename'])

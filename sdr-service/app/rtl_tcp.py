@@ -3,15 +3,62 @@ import struct
 import numpy as np
 
 class RTLTCPServer:
-    def __init__(self, host='0.0.0.0', port=1234):
+    def __init__(self, host='0.0.0.0', port=1234, signal_mixer=None):
         self.host = host
         self.port = port
         self.clients = []
+        self.signal_mixer = signal_mixer
+        self.client_readers = {}  # Track readers for command handling
 
     def create_dongle_info(self):
         """RTL-TCP handshake: 12-byte header"""
         # Magic: "RTL0", Tuner: R820T (1), Gain stages: 29
         return struct.pack('>4sII', b'RTL0', 1, 29)
+
+    async def handle_client_commands(self, reader, writer):
+        """Handle RTL-TCP commands from GQRX"""
+        try:
+            while True:
+                # RTL-TCP commands are 5 bytes: 1 byte cmd + 4 bytes param
+                data = await reader.read(5)
+                if not data or len(data) != 5:
+                    break
+
+                cmd = data[0]
+                param = struct.unpack('>I', data[1:5])[0]
+
+                # Command 0x01: Set frequency
+                if cmd == 0x01:
+                    freq_hz = param
+                    print(f"📻 GQRX tuned to: {freq_hz/1e6:.3f} MHz")
+                    if self.signal_mixer:
+                        self.signal_mixer.set_frequency(freq_hz)
+
+                # Command 0x02: Set sample rate
+                elif cmd == 0x02:
+                    sample_rate = param
+                    print(f"⚙️  Sample rate set to: {sample_rate/1e6:.3f} MHz")
+                    if self.signal_mixer:
+                        self.signal_mixer.set_sample_rate(sample_rate)
+
+                # Command 0x03: Set gain mode
+                elif cmd == 0x03:
+                    pass  # Not applicable for IQ playback
+
+                # Command 0x04: Set gain
+                elif cmd == 0x04:
+                    gain_db = param / 10.0
+                    print(f"📊 Gain set to: {gain_db} dB")
+
+                # Command 0x05: Set frequency correction
+                elif cmd == 0x05:
+                    ppm = param
+                    print(f"🔧 Frequency correction: {ppm} ppm")
+
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            print(f"⚠️  Command handler error: {e}")
 
     async def handle_client(self, reader, writer):
         """Handle GQRX client connection"""
@@ -23,20 +70,21 @@ class RTLTCPServer:
         await writer.drain()
 
         self.clients.append(writer)
+        self.client_readers[writer] = reader
+
+        # Start command handler for this client
+        command_task = asyncio.create_task(self.handle_client_commands(reader, writer))
 
         try:
-            # Keep connection alive, listen for commands
-            while True:
-                data = await reader.read(4)
-                if not data:
-                    break
-                # Commands from GQRX (frequency tuning, etc.)
-                # We ignore them for v1 simplicity
+            # Wait for command task to complete (client disconnect)
+            await command_task
         except:
             pass
         finally:
             if writer in self.clients:
                 self.clients.remove(writer)
+            if writer in self.client_readers:
+                del self.client_readers[writer]
             writer.close()
             print(f"❌ GQRX disconnected: {addr}")
 
@@ -44,6 +92,9 @@ class RTLTCPServer:
         """Send IQ samples to all connected GQRX clients"""
         if not self.clients or iq_chunk is None:
             return
+
+        # Clip to prevent saturation/wrapping (important when jamming is mixed in)
+        iq_chunk = np.clip(iq_chunk.real, -1.0, 1.0) + 1j * np.clip(iq_chunk.imag, -1.0, 1.0)
 
         # Convert complex64 to uint8 I/Q pairs (RTL-TCP format)
         i = ((iq_chunk.real * 127.5) + 127.5).astype(np.uint8)

@@ -1,0 +1,75 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Default to light theme - EXACT match to client-dashboard */
+:root {
+  /* Light theme colors */
+  --color-background: #f9fafb; /* gray-50 */
+  --color-surface: #ffffff;
+  --color-surface-light: #f3f4f6; /* gray-100 */
+  --color-primary: #3b82f6; /* blue-500 */
+  --color-accent: #8b5cf6; /* purple-500 */
+  --color-text-primary: #111827; /* gray-900 */
+  --color-text-secondary: #6b7280; /* gray-500 */
+  --color-text-muted: #9ca3af; /* gray-400 */
+  --color-border: #e5e7eb; /* gray-200 */
+
+  /* Status colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+
+  /* Sidebar stays dark regardless of theme */
+  --color-sidebar-bg: #1a1a2e;
+  --color-sidebar-surface: #0f0f23;
+  --color-sidebar-text: #e5e5e5;
+  --color-sidebar-text-muted: #a0a0a0;
+  --color-sidebar-accent: #3b82f6;
+}
+
+/* Dark theme - EXACT match to client-dashboard */
+[data-theme="dark"] {
+  --color-background: #0a0a0f;
+  --color-surface: #1a1a2e;
+  --color-surface-light: #0f0f23;
+  --color-primary: #3b82f6; /* Keep blue in dark theme */
+  --color-accent: #f39c12;
+  --color-text-primary: #e5e5e5;
+  --color-text-secondary: #a0a0a0;
+  --color-text-muted: #6c6c6c;
+  --color-border: #2a2a3e;
+
+  /* Status colors for dark theme */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-text-primary transition-colors duration-200;
+  }
+}
+
+@layer components {
+  /* Card component adapts to theme */
+  .card {
+    @apply bg-surface border border-border rounded-lg shadow-sm;
+  }
+
+  /* Light theme specific card styling */
+  [data-theme="light"] .card {
+    @apply shadow-md hover:shadow-lg transition-shadow;
+  }
+
+  /* Dark theme specific card styling */
+  [data-theme="dark"] .card {
+    @apply shadow-lg;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity;
+  }
+}

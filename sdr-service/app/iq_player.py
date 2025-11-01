@@ -33,18 +33,11 @@ class IQPlayer:
         """Switch to a different IQ file"""
         print(f"🔄 Switching to IQ file: {new_file_path}")
 
-        # Save playback state
-        was_running = self.running
-
         # Stop playback
         self.stop()
 
         # Load new file
         self.load_file(new_file_path)
-
-        # Resume if was playing
-        if was_running:
-            self.play()
 
         print(f"✅ Switched to: {os.path.basename(new_file_path)}")
 

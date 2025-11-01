@@ -24,31 +24,44 @@ async def main():
     SAMPLE_RATE = int(os.getenv('SAMPLE_RATE', '1024000'))
 
     print("=" * 60)
-    print("SDR/GQRX Streaming Service")
+    print("SDR/GQRX Streaming Service with RF Jamming")
     print("=" * 60)
     print(f"IQ File: {IQ_FILE}")
     print(f"Sample Rate: {SAMPLE_RATE} Hz")
+    print(f"RTL-TCP Port: 1234")
+    print(f"MQTT Control: apex/team/sdr-rf/control")
+    print(f"MQTT Status: apex/team/sdr-rf/status")
 
-    # Initialize components
+    # Initialize components with proper linking
     iq_player = IQPlayer(IQ_FILE, SAMPLE_RATE)
-    signal_mixer = SignalMixer()
-    rtl_tcp = RTLTCPServer()
-    mqtt = MQTTHandler(iq_player, signal_mixer)
+    signal_mixer = SignalMixer(sample_rate=SAMPLE_RATE)
+    rtl_tcp = RTLTCPServer(signal_mixer=signal_mixer)
+    mqtt = MQTTHandler(iq_player, signal_mixer, rtl_tcp)
 
     # Start MQTT
     mqtt.start()
 
-    # Auto-start playback
-    iq_player.play()
+    # Don't auto-start playback - wait for user to press play
+    # iq_player.play()
 
-    print("✅ Service ready")
+    print("✅ Service ready - waiting for playback command")
+    print("=" * 60)
+    print("\n📋 Available Commands (publish to apex/team/sdr-rf/control):")
+    print("  Playback: play, pause, stop")
+    print("  Jamming: enable_jamming, disable_jamming")
+    print("  Jamming Config: set_jam_type, set_jam_power, set_jam_frequency")
+    print("  Types: barrage, spot, sweep, pulse, chirp, fhss")
     print("=" * 60)
 
     # Run server and streaming loop
-    await asyncio.gather(
-        rtl_tcp.start(),
-        stream_loop(iq_player, signal_mixer, rtl_tcp)
-    )
+    try:
+        await asyncio.gather(
+            rtl_tcp.start(),
+            stream_loop(iq_player, signal_mixer, rtl_tcp)
+        )
+    except KeyboardInterrupt:
+        print("\n🛑 Shutting down...")
+        mqtt.stop()
 
 if __name__ == "__main__":
     asyncio.run(main())

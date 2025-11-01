@@ -32,6 +32,11 @@ interface InjectContextType {
   connectionStatus: 'connecting' | 'connected' | 'disconnected' | 'reconnecting';
   lastUpdate: Date | null;
   publishInject: (inject: any) => void;
+  turnInfo: {
+    turn_based: boolean;
+    current_turn?: number;
+    total_turns?: number;
+  };
 }
 
 const InjectContext = createContext<InjectContextType | undefined>(undefined);
@@ -55,19 +60,27 @@ export const InjectProvider = ({ children }: { children: ReactNode }) => {
   const [injects, setInjects] = useState<Inject[]>([]);
   const [exerciseState, setExerciseState] = useState<'RUNNING' | 'PAUSED' | 'STOPPED'>('RUNNING');
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [turnInfo, setTurnInfo] = useState<{
+    turn_based: boolean;
+    current_turn?: number;
+    total_turns?: number;
+  }>({ turn_based: false });
 
   const publishInject = (inject: any) => {
     if (client && client.connected) {
-      const injectsTopic = `apex/team/${teamId}/injects`;
+      // Always publish SDR/RF control commands to the sdr-rf topic
+      // The SDR service listens on apex/team/sdr-rf/injects
+      const injectsTopic = `apex/team/sdr-rf/injects`;
+      console.log(`📤 Publishing to ${injectsTopic}:`, inject);
       client.publish(injectsTopic, JSON.stringify(inject), (err) => {
         if (err) {
           console.error('Failed to publish inject:', err);
         } else {
-          console.log('Published inject:', inject);
+          console.log('✅ Published inject successfully');
         }
       });
     } else {
-      console.error('Cannot publish: MQTT client not connected');
+      console.error('❌ Cannot publish: MQTT client not connected', connectionStatus);
     }
   };
 
@@ -79,6 +92,12 @@ export const InjectProvider = ({ children }: { children: ReactNode }) => {
         if (parsed.formatted && parsed.elapsed !== undefined) {
           setTimer(parsed.formatted);
           setLastUpdate(new Date());
+        } else if (parsed.turn_based !== undefined) {
+          setTurnInfo({
+            turn_based: parsed.turn_based,
+            current_turn: parsed.current_turn,
+            total_turns: parsed.total_turns
+          });
         } else if (parsed.command) {
           switch (parsed.command) {
             case 'pause':
@@ -113,6 +132,7 @@ export const InjectProvider = ({ children }: { children: ReactNode }) => {
         connectionStatus,
         lastUpdate,
         publishInject,
+        turnInfo,
       }}
     >
       {children}

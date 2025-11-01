@@ -18,7 +18,7 @@ interface Scenario {
 
 const ScenariosPage = () => {
   // Disabled scenarios - template/testing scenarios not for production use
-  const DISABLED_SCENARIOS = ['maritime-crisis-scenario', 'turn-test', 'satcom-disruption-scenario', 'sdr-rf-monitoring-scenario'];
+  const DISABLED_SCENARIOS = ['maritime-crisis-scenario', 'turn-test', 'satcom-disruption-scenario'];
 
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [loading, setLoading] = useState(true);

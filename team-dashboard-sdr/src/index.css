@@ -48,24 +48,21 @@
 
 @layer base {
   body {
-    @apply bg-background text-text-primary transition-colors duration-200;
+    @apply text-text-primary transition-colors duration-200;
+    background: transparent;
+    min-height: 100vh;
   }
 }
 
 @layer components {
-  /* Card component adapts to theme */
+  /* Card component - gradient theme styling */
   .card {
-    @apply bg-surface border border-border rounded-lg shadow-sm;
+    @apply bg-white/90 backdrop-blur-sm shadow-2xl border border-gray-200 rounded-lg;
   }
 
-  /* Light theme specific card styling */
-  [data-theme="light"] .card {
-    @apply shadow-md hover:shadow-lg transition-shadow;
-  }
-
-  /* Dark theme specific card styling */
-  [data-theme="dark"] .card {
-    @apply shadow-lg;
+  /* Card hover effects */
+  .card:hover {
+    @apply shadow-blue-500/20;
   }
 
   /* Button styles */

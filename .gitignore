@@ -22,11 +22,12 @@ env/
 *.egg-info/
 .pytest_cache/
 
-# IQ Files (large binaries - regenerate with generate_demo_iq.py)
+# IQ Files and WAV Files (large binaries)
 *.iq
 *.dat
 *.raw
 *.cfile
+*.wav
 iq_files/
 scenarios/iq_library/
 

@@ -152,16 +152,23 @@ class ExerciseExecutor:
             print("No IQ file configured, skipping SDR service deployment")
             return
 
+        # Get sample rate from scenario config, default to 1024000
+        sample_rate = self.scenario_data.get('sample_rate', 1024000)
+
         container_name = f"sdr-service-{self.scenario_name}"
 
         # Convert /iq_library/file.iq to absolute host path
+        # The orchestration container has the host's scenarios directory mounted at /scenarios
+        # But when creating sibling containers, we need to use the actual host path
         if iq_file.startswith('/iq_library/'):
-            iq_filename = iq_file[13:]  # Remove /iq_library/ prefix
-            iq_file_host_path = f"/scenarios/iq_library/{iq_filename}"
+            iq_filename = iq_file[12:]  # Remove /iq_library prefix (12 chars, not 13)
+            # Use the actual host path (from the orchestration container's mount)
+            iq_file_host_path = f"/Users/brettburford/Development/CyberOps/space-cyber-range/apex-rf/scenarios/iq_library/{iq_filename}"
         else:
             iq_file_host_path = iq_file
 
         print(f"Deploying SDR service with IQ file: {iq_file}")
+        print(f"Sample rate: {sample_rate} Hz")
 
         # Check if container exists and remove it
         try:
@@ -172,19 +179,22 @@ class ExerciseExecutor:
         except docker.errors.NotFound:
             pass
 
+        # Mount the entire IQ library directory to support file switching
+        iq_library_host_path = "/Users/brettburford/Development/CyberOps/space-cyber-range/apex-rf/scenarios/iq_library"
+
         try:
             container = self.docker_client.containers.run(
                 'scip-v3-sdr-service:latest',
                 name=container_name,
                 detach=True,
                 environment={
-                    'IQ_FILE_PATH': '/iq_files/current.iq',
-                    'SAMPLE_RATE': '1024000'
+                    'IQ_FILE_PATH': '/iq_library/demo.iq',  # Start with demo.iq
+                    'SAMPLE_RATE': str(sample_rate)
                 },
                 ports={'1234/tcp': 1234},
                 volumes={
-                    iq_file_host_path: {
-                        'bind': '/iq_files/current.iq',
+                    iq_library_host_path: {
+                        'bind': '/iq_library',
                         'mode': 'ro'
                     }
                 },
@@ -201,6 +211,81 @@ class ExerciseExecutor:
             import traceback
             traceback.print_exc()
 
+    def _deploy_scenario_services(self):
+        """Deploy additional services defined in scenario config."""
+        services = self.scenario_data.get('services', [])
+        if not services:
+            print("No additional services to deploy")
+            return
+
+        iq_library_host_path = "/Users/brettburford/Development/CyberOps/space-cyber-range/apex-rf/scenarios/iq_library"
+
+        for service in services:
+            service_name = service.get('name')
+            image = service.get('image')
+
+            if not service_name or not image:
+                print(f"Skipping service with missing name or image: {service}")
+                continue
+
+            container_name = f"{service_name}-{self.scenario_name}"
+            print(f"Deploying service: {container_name} from image {image}")
+
+            # Check if container exists and remove it
+            try:
+                existing_container = self.docker_client.containers.get(container_name)
+                print(f"Found existing {container_name}. Stopping and removing...")
+                existing_container.stop()
+                existing_container.remove()
+            except docker.errors.NotFound:
+                pass
+
+            # Prepare port mappings
+            port_mappings = {}
+            for port in service.get('ports', []):
+                if ':' in port:
+                    host_port, container_port = port.split(':')
+                    port_mappings[f"{container_port}/tcp"] = int(host_port)
+
+            # Prepare volume mounts
+            volume_mappings = {}
+            for volume in service.get('volumes', []):
+                if ':' in volume:
+                    parts = volume.split(':')
+                    host_path = parts[0]
+                    container_path = parts[1]
+                    mode = parts[2] if len(parts) > 2 else 'rw'
+
+                    # Convert relative paths to absolute
+                    if host_path.startswith('./'):
+                        host_path = f"/Users/brettburford/Development/CyberOps/space-cyber-range/apex-rf/{host_path[2:]}"
+
+                    volume_mappings[host_path] = {
+                        'bind': container_path,
+                        'mode': mode
+                    }
+
+            try:
+                container = self.docker_client.containers.run(
+                    image,
+                    name=container_name,
+                    detach=True,
+                    environment=service.get('environment', {}),
+                    ports=port_mappings,
+                    volumes=volume_mappings,
+                    network=os.getenv('DOCKER_NETWORK', 'scip-network')
+                )
+                self.service_containers.append(container)
+                print(f"Service deployed: {container.name}")
+
+                container.reload()
+                print(f"Service {container.name} status: {container.status}")
+
+            except docker.errors.APIError as e:
+                print(f"Error deploying service {service_name}: {e}")
+                import traceback
+                traceback.print_exc()
+
     async def start(self):
         """
         Starts the exercise execution with state tracking.
@@ -215,6 +300,7 @@ class ExerciseExecutor:
         self.load_scenario()
         self._deploy_team_dashboards()
         self._deploy_sdr_service()
+        self._deploy_scenario_services()
 
         # Don't start the timer immediately - wait for explicit start command
         self.state = "NOT_STARTED"

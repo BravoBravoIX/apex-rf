@@ -1,0 +1,38 @@
+{
+  "id": "timeline-rf-demo",
+  "name": "RF Jamming Demo Timeline",
+  "description": "Demonstration scenario for RF jamming capabilities",
+  "version": "1.0.0",
+  "injects": [
+    {
+      "id": "inject-001",
+      "time": 0,
+      "type": "alert",
+      "content": {
+        "severity": "info",
+        "title": "Demo Started",
+        "message": "RF Jamming demonstration initiated. GQRX should be connected to localhost:1234 showing the spectrum waterfall."
+      }
+    },
+    {
+      "id": "inject-002",
+      "time": 5,
+      "type": "alert",
+      "content": {
+        "severity": "info",
+        "title": "System Ready",
+        "message": "IQ file playback active. Use the RF Control dashboard to demonstrate different jamming techniques."
+      }
+    },
+    {
+      "id": "inject-003",
+      "time": 10,
+      "type": "alert",
+      "content": {
+        "severity": "warning",
+        "title": "Demo Checkpoint",
+        "message": "Demonstrate spot jamming: Enable jamming and adjust power to show signal interference in GQRX."
+      }
+    }
+  ]
+}

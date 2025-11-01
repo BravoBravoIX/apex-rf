@@ -1,18 +1,57 @@
 {
   "id": "sdr-rf-monitoring-scenario",
   "name": "SDR/RF Spectrum Monitoring",
-  "description": "Real-time RF spectrum monitoring using GQRX. Analyze signals and identify jamming patterns.",
-  "version": "1.0.0",
+  "description": "Real-time RF spectrum monitoring using GQRX. Analyze signals and identify jamming patterns with advanced decoders.",
+  "version": "2.0.0",
   "duration_minutes": 30,
   "iq_file": "/iq_library/demo.iq",
+  "sample_rate": 250000,
   "teams": [
     {
       "id": "sdr-rf",
-      "name": "RF Analysis Team",
-      "description": "Monitor RF spectrum and identify interference",
+      "name": "RF Control",
+      "description": "Control RF jamming and IQ file playback",
       "timeline_file": "timelines/timeline-sdr-rf.json",
       "dashboard_port": 3300,
       "dashboard_image": "team-dashboard-sdr:latest"
+    },
+    {
+      "id": "sstv-decode",
+      "name": "SSTV Image Decoder",
+      "description": "Decode SSTV images from IQ samples",
+      "timeline_file": "timelines/timeline-sdr-rf.json",
+      "dashboard_port": 3301,
+      "dashboard_image": "team-dashboard-sstv:latest"
+    },
+    {
+      "id": "ais-decode",
+      "name": "AIS Maritime Tracking",
+      "description": "Track vessels from AIS VHF signals",
+      "timeline_file": "timelines/timeline-sdr-rf.json",
+      "dashboard_port": 3302,
+      "dashboard_image": "team-dashboard-ais:latest"
+    },
+    {
+      "id": "metrics-decode",
+      "name": "Signal Metrics Analyzer",
+      "description": "Real-time signal quality and jamming impact analysis",
+      "timeline_file": "timelines/timeline-sdr-rf.json",
+      "dashboard_port": 3303,
+      "dashboard_image": "team-dashboard-metrics:latest"
+    }
+  ],
+  "services": [
+    {
+      "name": "decode-service",
+      "image": "apex-rf-decode-service:latest",
+      "ports": ["8002:8002"],
+      "environment": {
+        "MQTT_BROKER": "mqtt://mqtt:1883",
+        "IQ_LIBRARY_DIR": "/iq_library"
+      },
+      "volumes": [
+        "./scenarios/iq_library:/iq_library:ro"
+      ]
     }
   ]
 }

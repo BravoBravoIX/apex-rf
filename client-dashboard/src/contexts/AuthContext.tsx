@@ -14,28 +14,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [requiresAuth, setRequiresAuth] = useState(true);
 
   useEffect(() => {
-    // Check if running on localhost
-    const hostname = window.location.hostname;
-    const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-
-    setRequiresAuth(!isLocalhost);
-
-    // If localhost, auto-authenticate
-    if (isLocalhost) {
-      setIsAuthenticated(true);
-    } else {
-      // Check if already authenticated in this session
-      const authFlag = sessionStorage.getItem('dewc_authenticated');
-      if (authFlag === 'true') {
-        setIsAuthenticated(true);
-      }
-    }
+    // Disable authentication for demo - allow access without login
+    setRequiresAuth(false);
+    setIsAuthenticated(true);
   }, []);
 
   const login = (username: string, password: string): boolean => {
-    if (username === 'dewc' && password === 'indopac') {
+    if (username === 'cyberops' && password === 'demo') {
       setIsAuthenticated(true);
-      sessionStorage.setItem('dewc_authenticated', 'true');
+      sessionStorage.setItem('cyberops_authenticated', 'true');
       return true;
     }
     return false;
@@ -43,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setIsAuthenticated(false);
-    sessionStorage.removeItem('dewc_authenticated');
+    sessionStorage.removeItem('cyberops_authenticated');
   };
 
   return (

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Electronic Warfare Intelligence - SATCOM Dashboard</title>
+  <link rel="stylesheet" href="/satcom/css/common.css">
+  <style>
+    .spectrum-section {
+      margin-bottom: 2rem;
+    }
+
+    .spectrum-display {
+      background: #1a1a1a;
+      border-radius: 8px;
+      padding: 2rem;
+      margin-top: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .spectrum-bars {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      height: 200px;
+      gap: 2px;
+    }
+
+    .spectrum-bar {
+      flex: 1;
+      background: linear-gradient(to top, #2ecc71, #f39c12, #e74c3c);
+      border-radius: 2px 2px 0 0;
+      transition: height 0.3s ease;
+      min-height: 2px;
+    }
+
+    .spectrum-bar.interference {
+      background: linear-gradient(to top, #e74c3c, #c0392b);
+      box-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .spectrum-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: #95a5a6;
+    }
+
+    .threat-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .threat-classification {
+      padding: 1rem;
+      background: var(--bg-primary);
+      border-radius: 6px;
+    }
+
+    .classification-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+
+    .classification-value {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .threat-hostile {
+      color: var(--status-critical);
+    }
+
+    .threat-unknown {
+      color: var(--text-secondary);
+    }
+
+    .confidence-meter {
+      margin-top: 0.5rem;
+      height: 8px;
+      background: #ecf0f1;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--status-degraded), var(--status-nominal));
+      transition: width 0.5s ease;
+    }
+
+    .geolocation-display {
+      margin-bottom: 2rem;
+    }
+
+    .location-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .location-item {
+      padding: 1rem;
+      background: var(--bg-primary);
+      border-radius: 6px;
+    }
+
+    .countermeasures-list {
+      margin-bottom: 2rem;
+    }
+
+    .countermeasure-item {
+      padding: 0.75rem 1rem;
+      background: rgba(52, 152, 219, 0.1);
+      border-left: 4px solid var(--accent-primary);
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .effectiveness-banner {
+      padding: 1.5rem;
+      background: linear-gradient(135deg, rgba(39, 174, 96, 0.15), rgba(22, 160, 133, 0.15));
+      border-left: 4px solid var(--status-nominal);
+      border-radius: 6px;
+      display: none;
+    }
+
+    .effectiveness-banner.show {
+      display: block;
+    }
+
+    .effectiveness-title {
+      font-weight: 600;
+      color: var(--status-nominal);
+      font-size: 1.125rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .characteristics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .characteristic-item {
+      padding: 0.75rem;
+      background: var(--bg-primary);
+      border-radius: 4px;
+      font-size: 0.875rem;
+    }
+
+    .characteristic-label {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .characteristic-value {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <!-- Alert Banner (hidden by default) -->
+  <div id="alertBanner" class="alert-banner">
+    <div class="alert-content">
+      <div class="alert-text">
+        <div class="alert-title" id="alertTitle">Alert</div>
+        <div class="alert-message" id="alertMessage">Alert message</div>
+      </div>
+      <button class="alert-close" onclick="closeAlert()">Dismiss</button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div>
+      <h1 class="dashboard-title">Electronic Warfare Intelligence</h1>
+      <div class="dashboard-subtitle">RF Spectrum Analysis & Threat Characterization</div>
+    </div>
+    <div class="header-status">
+      <div class="status-item">
+        <div class="status-label">Exercise Timer</div>
+        <div class="status-value" id="exerciseTimer">T+00:00</div>
+      </div>
+      <div class="status-item">
+        <div class="status-label">UTC Time</div>
+        <div class="status-value" id="utcTime">--:--:--</div>
+      </div>
+      <div class="status-item">
+        <div class="status-label">Connection</div>
+        <div class="connection-status">
+          <div class="connection-indicator" id="connectionIndicator"></div>
+          <div class="status-value" id="connectionStatus">Disconnected</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="dashboard-content">
+    <!-- RF Spectrum Display -->
+    <section class="spectrum-section">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">RF Spectrum Monitor</h2>
+          <div id="frequencyRange" style="font-size: 0.875rem; color: var(--text-secondary);">
+            7.25 - 8.40 GHz (X-Band SATCOM)
+          </div>
+        </div>
+        <div class="spectrum-display">
+          <div class="spectrum-bars" id="spectrumBars">
+            <!-- Spectrum bars will be generated by JavaScript -->
+          </div>
+          <div class="spectrum-labels">
+            <span>7.25 GHz</span>
+            <span>7.85 GHz</span>
+            <span>8.40 GHz</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Threat Classification Panel -->
+    <section class="threat-panel">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Threat Classification</h2>
+        </div>
+        <div class="card-body">
+          <div class="threat-classification">
+            <div class="classification-label">Emitter Type</div>
+            <div class="classification-value" id="emitterType">Unknown</div>
+          </div>
+          <div class="threat-classification">
+            <div class="classification-label">Threat Category</div>
+            <div class="classification-value threat-unknown" id="threatCategory">Unknown</div>
+          </div>
+          <div class="threat-classification">
+            <div class="classification-label">Confidence Level</div>
+            <div class="classification-value" id="confidenceLevel">--</div>
+            <div class="confidence-meter">
+              <div class="confidence-fill" id="confidenceFill" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+        <div id="characteristicsContainer" style="display: none;">
+          <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+            <h3 style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.75rem;">EMITTER CHARACTERISTICS</h3>
+            <div class="characteristics-grid" id="characteristics"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">System Intelligence</h2>
+        </div>
+        <div class="card-body">
+          <div class="threat-classification">
+            <div class="classification-label">System Name</div>
+            <div class="classification-value" id="systemName">--</div>
+          </div>
+          <div class="threat-classification">
+            <div class="classification-label">NATO Designation</div>
+            <div class="classification-value" id="natoDesignation">--</div>
+          </div>
+          <div class="threat-classification">
+            <div class="classification-label">Manufacturer</div>
+            <div class="classification-value" id="manufacturer">--</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Geolocation Display -->
+    <section class="geolocation-display">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Emitter Geolocation</h2>
+        </div>
+        <div class="location-grid" id="locationGrid">
+          <div class="location-item">
+            <div class="metric-label">Latitude</div>
+            <div class="metric-value" id="latitude">--</div>
+          </div>
+          <div class="location-item">
+            <div class="metric-label">Longitude</div>
+            <div class="metric-value" id="longitude">--</div>
+          </div>
+          <div class="location-item">
+            <div class="metric-label">Altitude</div>
+            <div class="metric-value" id="altitude">--</div>
+          </div>
+          <div class="location-item">
+            <div class="metric-label">Method</div>
+            <div class="metric-value" id="method">--</div>
+          </div>
+          <div class="location-item">
+            <div class="metric-label">Confidence</div>
+            <div class="metric-value" id="geoConfidence">--</div>
+          </div>
+          <div class="location-item">
+            <div class="metric-label">Error Radius</div>
+            <div class="metric-value" id="errorRadius">--</div>
+          </div>
+        </div>
+        <div id="nearestLandmark" style="margin-top: 1rem; padding: 0.75rem; background: var(--bg-primary); border-radius: 4px; font-size: 0.875rem; display: none;">
+          <strong>Nearest Landmark:</strong> <span id="landmarkText"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Countermeasures -->
+    <section class="countermeasures-list">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Recommended Countermeasures</h2>
+        </div>
+        <div id="countermeasuresList">
+          <div style="padding: 1rem; color: var(--text-secondary); text-align: center;">
+            No countermeasures available
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Jamming Effectiveness -->
+    <div id="effectivenessBanner" class="effectiveness-banner">
+      <div class="effectiveness-title">Countermeasure Effectiveness</div>
+      <div id="effectivenessText"></div>
+    </div>
+  </main>
+
+  <!-- Libraries -->
+  <script src="https://unpkg.com/mqtt@4.3.7/dist/mqtt.min.js"></script>
+
+  <!-- Application Scripts -->
+  <script src="/satcom/js/ew-intel.js"></script>
+</body>
+</html>

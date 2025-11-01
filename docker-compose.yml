@@ -75,9 +75,36 @@ services:
     deploy:
       replicas: 0
 
+  team-dashboard-sstv:
+    image: team-dashboard-sstv:latest
+    build: ./team-dashboard-sstv
+    # SSTV image decoder dashboard
+    deploy:
+      replicas: 0
+
+  team-dashboard-ais:
+    image: team-dashboard-ais:latest
+    build: ./team-dashboard-ais
+    # AIS maritime tracking dashboard
+    deploy:
+      replicas: 0
+
+  team-dashboard-metrics:
+    image: team-dashboard-metrics:latest
+    build: ./team-dashboard-metrics
+    # Signal metrics analyzer dashboard
+    deploy:
+      replicas: 0
+
   sdr-service:
     build: ./sdr-service
     # This service is not started by default, scenario is disabled
+    deploy:
+      replicas: 0
+
+  decode-service:
+    build: ./decode-service
+    # Decodes IQ samples for SSTV, AIS, and metrics analysis
     deploy:
       replicas: 0
 

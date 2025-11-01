@@ -52,7 +52,6 @@ const Header = () => {
               <img src="/api/scenarios/dropbear.png" alt="Dropbear" className="h-8 opacity-70" />
             </div>
             <img src="/cyberops-logo.png" alt="CyberOps" className="h-10" />
-            <img src="/dewc-logo.jpeg" alt="DEWC" className="h-8" />
           </div>
           <div className="flex items-center gap-4">
             <button
@@ -100,12 +99,6 @@ const Header = () => {
           >
             {getThemeIcon()}
           </button>
-          <img
-            src="/dewc-logo.jpeg"
-            alt="DEWC"
-            className="h-8 w-auto object-contain"
-            style={{ filter: theme === 'dark' ? 'brightness(0.9)' : 'none' }}
-          />
           <div className="text-sm text-text-secondary">User: Admin</div>
           {requiresAuth && (
             <button

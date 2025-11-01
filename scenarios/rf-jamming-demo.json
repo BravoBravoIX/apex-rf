@@ -1,0 +1,54 @@
+{
+  "id": "rf-jamming-demo",
+  "name": "RF Jamming Demonstration",
+  "description": "Demonstrate RF jamming capabilities with real-time spectrum visualization and signal quality metrics",
+  "version": "1.0.0",
+  "duration_minutes": 30,
+  "iq_file": "/iq_library/uhf-fo.iq",
+  "sample_rate": 750000,
+  "teams": [
+    {
+      "id": "rf-control",
+      "name": "RF Jamming Control",
+      "description": "Control RF signal playback and jamming operations",
+      "timeline_file": "timelines/timeline-rf-demo.json",
+      "dashboard_port": 3400,
+      "dashboard_image": "team-dashboard-sdr:latest"
+    },
+    {
+      "id": "signal-metrics",
+      "name": "Signal Quality Metrics",
+      "description": "Monitor signal quality and jamming effectiveness in real-time",
+      "timeline_file": "timelines/timeline-rf-demo.json",
+      "dashboard_port": 3401,
+      "dashboard_image": "team-dashboard-metrics:latest"
+    }
+  ],
+  "services": [
+    {
+      "name": "sdr-service",
+      "image": "apex-rf-sdr-service:latest",
+      "ports": ["1234:1234"],
+      "environment": {
+        "MQTT_BROKER": "mqtt://mqtt:1883",
+        "IQ_FILE_PATH": "/iq_library/uhf-fo.iq",
+        "SAMPLE_RATE": "750000"
+      },
+      "volumes": [
+        "./scenarios/iq_library:/iq_library:ro"
+      ]
+    },
+    {
+      "name": "decode-service",
+      "image": "apex-rf-decode-service:latest",
+      "ports": ["8002:8002"],
+      "environment": {
+        "MQTT_BROKER": "mqtt://mqtt:1883",
+        "IQ_LIBRARY_DIR": "/iq_library"
+      },
+      "volumes": [
+        "./scenarios/iq_library:/iq_library:ro"
+      ]
+    }
+  ]
+}
