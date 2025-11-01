@@ -83,6 +83,9 @@ redis-data/
 *.backup
 scenarios/backups/
 
+# Embedded git repos
+rf-jammer_demo/
+
 # Test coverage
 coverage/
 .nyc_output/

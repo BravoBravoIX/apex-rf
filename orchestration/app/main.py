@@ -1,5 +1,5 @@
 
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -69,12 +69,19 @@ if os.path.exists(SCENARIOS_DIR):
     app.mount("/api/scenarios", StaticFiles(directory=SCENARIOS_DIR), name="scenarios")
 
 @app.post("/api/v1/exercises/{scenario_name}/deploy")
-async def deploy_exercise(scenario_name: str):
+async def deploy_exercise(scenario_name: str, request: Request):
     """Deploys a new exercise from a scenario (dashboards only, no timer)."""
     if scenario_name in active_exercises:
         raise HTTPException(status_code=409, detail="Exercise with this name is already deployed.")
 
-    executor = ExerciseExecutor(scenario_name)
+    # Get the host from the request headers, fallback to localhost
+    # This allows the service to work on both localhost and AWS without env vars
+    host = request.headers.get("host", "localhost:8001")
+    # Remove port 8001 from host if present, we'll use the actual dashboard ports
+    if ":8001" in host:
+        host = host.replace(":8001", "")
+
+    executor = ExerciseExecutor(scenario_name, public_host=host)
     active_exercises[scenario_name] = executor
     result = await executor.start()  # This now just deploys, doesn't start timer
 

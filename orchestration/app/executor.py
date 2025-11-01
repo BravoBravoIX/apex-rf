@@ -12,17 +12,22 @@ class ExerciseExecutor:
     Manages exercise execution with timer, state management, and inject delivery.
     """
 
-    def __init__(self, scenario_name: str):
+    def __init__(self, scenario_name: str, public_host: str = None):
         """
         Initialize the exercise executor.
 
         Args:
             scenario_name: Name of the scenario to execute
+            public_host: Public hostname/IP for accessing dashboards (e.g., 'example.com' or '1.2.3.4')
+                        If not provided, falls back to PUBLIC_HOST env var or 'localhost'
         """
         self.scenario_name = scenario_name
         self.scenario_data = None
         self.timelines = {}
         self.is_running = False
+
+        # Store public host for dashboard URL generation
+        self.public_host = public_host or os.getenv('PUBLIC_HOST', 'localhost')
 
         # State management
         self.state = "NOT_STARTED"  # NOT_STARTED, RUNNING, PAUSED, STOPPED
@@ -130,9 +135,8 @@ class ExerciseExecutor:
                 )
                 self.team_containers.append(container)
                 # Include configuration in URL query parameters
-                # Use PUBLIC_HOST env var for AWS deployment, fallback to localhost for local dev
-                public_host = os.getenv('PUBLIC_HOST', 'localhost')
-                self.dashboard_urls[team_id] = f"http://{public_host}:{port}/?team={team_id}&exercise={self.scenario_name}"
+                # Use the public_host provided during initialization (auto-detected from request)
+                self.dashboard_urls[team_id] = f"http://{self.public_host}:{port}/?team={team_id}&exercise={self.scenario_name}"
 
                 # Debugging: Print container status and logs
                 container.reload()
