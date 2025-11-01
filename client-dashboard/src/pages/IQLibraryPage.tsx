@@ -15,7 +15,7 @@ interface IQFile {
 
 const IQLibraryPage: React.FC = () => {
   // Demo mode toggle - set to false to enable upload
-  const DEMO_MODE = true;
+  const DEMO_MODE = false;
 
   const [iqFiles, setIqFiles] = useState<IQFile[]>([]);
   const [loading, setLoading] = useState(true);
