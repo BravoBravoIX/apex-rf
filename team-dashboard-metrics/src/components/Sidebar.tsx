@@ -18,6 +18,7 @@ export const Sidebar = () => {
 
   const navigation = [
     { name: 'Signal Metrics', href: `/${queryString}` },
+    { name: 'IQ Analysis', href: `/iq-analysis${queryString}` },
   ] as const;
 
   return (

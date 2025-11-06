@@ -44,7 +44,9 @@
       "ports": ["8002:8002"],
       "environment": {
         "MQTT_BROKER": "mqtt://mqtt:1883",
-        "IQ_LIBRARY_DIR": "/iq_library"
+        "IQ_LIBRARY_DIR": "/iq_library",
+        "RTL_TCP_HOST": "sdr-service-rf-jamming-demo",
+        "RTL_TCP_PORT": "1234"
       },
       "volumes": [
         "./scenarios/iq_library:/iq_library:ro"

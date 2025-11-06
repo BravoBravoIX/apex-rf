@@ -89,7 +89,7 @@ class RTLTCPServer:
             print(f"❌ GQRX disconnected: {addr}")
 
     async def broadcast_samples(self, iq_chunk):
-        """Send IQ samples to all connected GQRX clients"""
+        """Send IQ samples to all connected clients (non-blocking)"""
         if not self.clients or iq_chunk is None:
             return
 
@@ -105,12 +105,17 @@ class RTLTCPServer:
         iq_bytes[0::2] = i
         iq_bytes[1::2] = q
 
-        # Broadcast to all clients
+        # Broadcast to all clients WITHOUT blocking
+        # Just write to buffers, let OS TCP handle backpressure
+        bytes_data = iq_bytes.tobytes()
+
         for client in self.clients[:]:
             try:
-                client.write(iq_bytes.tobytes())
-                await client.drain()
-            except:
+                # Write to buffer without waiting for drain
+                # This prevents slow clients from blocking fast clients (like GQRX)
+                client.write(bytes_data)
+            except Exception as e:
+                print(f"⚠️  Client write error: {e}")
                 if client in self.clients:
                     self.clients.remove(client)
 

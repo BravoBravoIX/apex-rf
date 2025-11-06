@@ -91,6 +91,7 @@ class IQFileReader:
 def calculate_snr(iq_samples: np.ndarray, signal_bandwidth_hz: float = None, sample_rate: int = 1024000) -> float:
     """
     Calculate Signal-to-Noise Ratio from IQ samples
+    Uses percentile-based estimation to properly detect jamming
 
     Args:
         iq_samples: Complex IQ samples
@@ -115,9 +116,23 @@ def calculate_snr(iq_samples: np.ndarray, signal_bandwidth_hz: float = None, sam
         noise_bins = np.concatenate([psd[:num_bins], psd[-num_bins:]])
         noise_power = np.mean(noise_bins)
     else:
-        # Simple signal/noise estimate
-        signal_power = np.max(psd)
-        noise_power = np.median(psd)
+        # Aggressive signal/noise estimate that's very sensitive to jamming
+        # Signal power: mean of top 5% of bins (narrowest signal estimate)
+        # Noise power: mean of 50th-90th percentile (captures raised noise floor from jamming)
+
+        # Sort PSD to find percentiles
+        psd_sorted = np.sort(psd)
+
+        # Signal power: average of top 5% of bins (very narrow signal band)
+        top_5_percent_idx = int(len(psd_sorted) * 0.95)
+        signal_power = np.mean(psd_sorted[top_5_percent_idx:])
+
+        # Noise power: Use 50th-90th percentile range
+        # This captures the bulk of the spectrum that jamming raises
+        # Excluding bottom 50% (may have deep nulls) and top 10% (signal peaks)
+        percentile_50_idx = int(len(psd_sorted) * 0.50)
+        percentile_90_idx = int(len(psd_sorted) * 0.90)
+        noise_power = np.mean(psd_sorted[percentile_50_idx:percentile_90_idx])
 
     if noise_power == 0:
         return float('inf')
